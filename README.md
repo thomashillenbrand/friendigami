@@ -1,2 +1,2 @@
 # friendigami
-App to track unique combinations of hangouts
+App to track unique combinations of hangouts between.
