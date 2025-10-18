@@ -17,7 +17,7 @@ class FriendService:
         """Retrieve a Friend by symbol."""
         return self.friend_repo.get_by_symbol(symbol=symbol)
 
-    def add_friend(self, symbol: str, first_name: str, last_name: str) -> Friend:
+    def create_friend(self, symbol: str, first_name: str, last_name: str) -> Friend:
         """Add a new Friend."""
         if self.friend_repo.get_by_symbol(symbol) is not None:
             raise ValueError(f"Friend with symbol '{symbol}' already exists.")

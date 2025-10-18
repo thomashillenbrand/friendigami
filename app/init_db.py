@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     friend_service = FriendService()
 
-    friend_service.add_friend(symbol="T", first_name="Tom", last_name="Hillenbrand")
-    friend_service.add_friend(symbol="M", first_name="Marin", last_name="Williams")
+    friend_service.create_friend(symbol="T", first_name="Tom", last_name="Hillenbrand")
+    friend_service.create_friend(symbol="M", first_name="Marin", last_name="Williams")
 
     print("Database tables created (or already existed): friendigami.db")
