@@ -5,6 +5,6 @@ from sqlalchemy import Column, Integer, String
 class Friend(Base):
     __tablename__ = "friends"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    name = Column(String, nullable=False)
-    symbol = Column(String, nullable=False, unique=True)
+    symbol = Column(String, primary_key=True, nullable=False)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)

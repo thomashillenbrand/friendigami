@@ -4,17 +4,17 @@ from app.db.session import SessionLocal
 
 class FriendRepository:
     """Repository for Friend model CRUD operations."""
-    def __init__(self):
-        pass
 
     # TODO:
     #  - implement methods using schemas
     #  - add logging instead of print statements
     #  - handle specific exceptions
+    #  - add new methods as needed
+    #
 
-    def create(self, name: str, symbol: str) -> Friend:
+    def create(self, symbol: str, first_name: str, last_name: str) -> Friend:
         """Create a new Friend record in the database."""
-        friend = Friend(name=name, symbol=symbol)
+        friend = Friend(symbol=symbol, first_name=first_name, last_name=last_name)
         with SessionLocal() as db:
             try:
                 db.add(friend)
@@ -28,7 +28,7 @@ class FriendRepository:
 
         return friend
 
-    def delete(self, symbol) -> bool:
+    def delete(self, symbol: str) -> bool:
         """Delete a Friend record from the database by symbol."""
         result = True
         with SessionLocal() as db:
@@ -46,14 +46,15 @@ class FriendRepository:
         return result
 
 
-    def update(self, friend_id, name=None, symbol=None) -> Friend:
+    def update(self, symbol: str, new_symbol: str = None, first_name: str = None, last_name: str = None) -> Friend:
         """Update a Friend record in the database."""
         with SessionLocal() as db:
             try:
-                friend = db.query(Friend).filter(Friend.id == friend_id).first()
+                friend = db.query(Friend).filter(Friend.symbol == symbol).first()
                 if friend:
-                    friend.name = name if name is not None else friend.name
-                    friend.symbol = symbol if symbol is not None else friend.symbol
+                    friend.symbol = new_symbol if new_symbol is not None else friend.symbol
+                    friend.first_name = first_name if first_name is not None else friend.first_name
+                    friend.last_name = last_name if last_name is not None else friend.last_name
                     db.commit()
                     db.refresh(friend)
             except Exception as e:
@@ -70,15 +71,8 @@ class FriendRepository:
             return friends
 
 
-    def get_by_symbol(self, symbol) -> Friend:
+    def get_by_symbol(self, symbol: str) -> Friend:
         """Retrieve a Friend record from the database by symbol."""
         with SessionLocal() as db:
             friend = db.query(Friend).filter(Friend.symbol == symbol).first()
-            return friend
-
-
-    def get_by_id(self, friend_id) -> Friend:
-        """Retrieve a Friend record from the database by ID."""
-        with SessionLocal() as db:
-            friend = db.query(Friend).filter(Friend.id == friend_id).first()
             return friend
