@@ -1,8 +1,11 @@
+"""Define the Friend model for the database."""
+from sqlalchemy import Column, String
+
 from app.db.base import Base
-from sqlalchemy import Column, Integer, String
 
 
 class Friend(Base):
+    """SQLAlchemy model for a Friend."""
     __tablename__ = "friends"
 
     symbol = Column(String, primary_key=True, nullable=False)

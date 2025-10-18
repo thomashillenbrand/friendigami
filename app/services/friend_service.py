@@ -30,10 +30,12 @@ class FriendService:
         friend = self.friend_repo.get_by_symbol(symbol)
         return self.friend_repo.delete(symbol=friend.symbol)
 
-    def modify_friend(self, symbol: str, new_symbol: str = None, first_name: str = None, last_name: str = None) -> Friend:
+    def modify_friend(self, symbol: str, new_symbol: str=None,
+                      first_name: str=None, last_name: str=None) -> Friend:
         """Modify an existing Friend's details."""
         friend = self.friend_repo.get_by_symbol(symbol)
         if friend is None:
             raise ValueError(f"Friend with symbol '{symbol}' does not exist.")
-        return self.friend_repo.update(symbol=symbol, new_symbol=new_symbol, first_name=first_name, last_name=last_name)
+        return self.friend_repo.update(symbol=symbol, new_symbol=new_symbol, 
+                                       first_name=first_name, last_name=last_name)
     

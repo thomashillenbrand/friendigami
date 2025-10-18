@@ -1,11 +1,11 @@
 
 """Initialize the database by creating tables if they do not exist."""
 from app.db.base import Base, engine
-from app.models import friend
+from app.models import friend # pylint: disable=unused-import
 
 from app.services.friend_service import FriendService
 
-# FIXME: use alembic for migrations
+# TODO: use alembic for migrations
 
 def create_tables():
     """Create database tables defined by SQLAlchemy models."""

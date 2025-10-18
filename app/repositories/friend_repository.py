@@ -20,7 +20,7 @@ class FriendRepository:
                 db.add(friend)
                 db.commit()
                 db.refresh(friend)
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-except
                 db.rollback()
                 print(f"Error occurred: {e}")
             finally:
@@ -37,7 +37,7 @@ class FriendRepository:
                 if friend:
                     db.delete(friend)
                     db.commit()
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-except
                 db.rollback()
                 print(f"Error occurred: {e}")
                 result =  False
@@ -46,7 +46,8 @@ class FriendRepository:
         return result
 
 
-    def update(self, symbol: str, new_symbol: str = None, first_name: str = None, last_name: str = None) -> Friend:
+    def update(self, symbol: str, new_symbol: str = None,
+               first_name: str = None, last_name: str = None) -> Friend:
         """Update a Friend record in the database."""
         with SessionLocal() as db:
             try:
@@ -57,7 +58,7 @@ class FriendRepository:
                     friend.last_name = last_name if last_name is not None else friend.last_name
                     db.commit()
                     db.refresh(friend)
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-except
                 db.rollback()
                 print(f"Error occurred: {e}")
             finally:
