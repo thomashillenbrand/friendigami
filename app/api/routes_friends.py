@@ -1,3 +1,4 @@
+"""Friends related API routes."""
 from fastapi import APIRouter, HTTPException
 
 from app.models.friend import Friend
@@ -6,7 +7,12 @@ from app.services.friend_service import FriendService
 router = APIRouter()
 friend_service = FriendService()
 
-@router.get("/friends/", response_model=None)
+# TODO:
+#  - have a response model via schemas
+#  - allow for JSON formatted input/output
+#
+
+@router.get("/friends", response_model=None)
 def list_friends() -> list[Friend]:
     """List all Friends."""
     friends = friend_service.friend_repo.get_all()
