@@ -3,9 +3,9 @@
 from app.db.base import Base, engine
 from app.models import friend
 
-from app.repositories.friend_repository import FriendRepository
+from app.services.friend_service import FriendService
 
-# TODO: use alembic for migrations
+# FIXME: use alembic for migrations
 
 def create_tables():
     """Create database tables defined by SQLAlchemy models."""
@@ -15,9 +15,9 @@ def create_tables():
 if __name__ == "__main__":
     create_tables()
 
-    friend_repo = FriendRepository()
+    friend_service = FriendService()
 
-    friend_repo.update(friend_id=1, name="Thomas", symbol="T")
-    friend_repo.create(name="Marin Williams", symbol="M")
+    friend_service.add_friend(symbol="T", first_name="Tom", last_name="Hillenbrand")
+    friend_service.add_friend(symbol="M", first_name="Marin", last_name="Williams")
 
     print("Database tables created (or already existed): friendigami.db")
