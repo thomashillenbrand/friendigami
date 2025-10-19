@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Friendigami — Friends</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;max-width:900px;margin:2rem auto;padding:0 1rem}
+    /* Fixed table layout so header and body columns align predictably */
+    table{width:100%;border-collapse:collapse;margin-top:1rem;table-layout:fixed}
+    /* enforce consistent column sizing and prevent overflow */
+    th,td{border:1px solid #ddd;padding:.5rem;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+    /* make the actions column share the same width as the other columns */
+    #friendsTable col.actions-col { width: 25%; }
+    /* center action buttons and give them a small min-width so they fit */
+    .actions { text-align: center; }
+    .actions button { min-width: 64px; }
+    form{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+    input{padding:.4rem;border:1px solid #ccc;border-radius:4px}
+    button{padding:.4rem .6rem;border-radius:4px;border:1px solid #888;background:#f5f5f5;cursor:pointer}
+    .inline{display:inline-flex;gap:.4rem}
+  </style>
+</head>
+<body>
+  <h1>Friendigami — Friends</h1>
+
+  <section id="create">
+    <h2>Create Friend</h2>
+    <form id="createForm">
+      <input id="c_symbol" placeholder="Symbol (unique)" required />
+      <input id="c_first" placeholder="First name" required />
+      <input id="c_last" placeholder="Last name" required />
+      <button type="submit">Create</button>
+    </form>
+  </section>
+
+  <section id="list">
+    <h2>All Friends</h2>
+    <!-- use colgroup to guarantee column widths (last col is actions) -->
+    <table id="friendsTable">
+      <colgroup>
+        <col style="width:25%">
+        <col style="width:25%">
+        <col style="width:25%">
+        <col class="actions-col">
+      </colgroup>
+      <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>First</th>
+            <th>Last</th>
+            <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <template id="rowTemplate">
+    <tr>
+      <td class="sym"></td>
+      <td class="first"></td>
+      <td class="last"></td>
+    <td class="actions">
+        <div class="inline">
+            <button class="edit">Edit</button>
+            <button class="delete">Delete</button>
+        </div>
+    </td>
+    </tr>
+  </template>
+
+  <script>
+    const apiBase = '';
+
+    async function fetchFriends() {
+      const res = await fetch(`${apiBase}/friends`);
+      return res.ok ? res.json() : [];
+    }
+
+    async function render() {
+      const tbody = document.querySelector('#friendsTable tbody');
+      tbody.innerHTML = '';
+      const friends = await fetchFriends();
+      const tpl = document.getElementById('rowTemplate');
+      friends.forEach(f => {
+        const fragment = tpl.content.cloneNode(true);
+        fragment.querySelector('.sym').textContent = f.symbol;
+        fragment.querySelector('.first').textContent = f.first_name;
+        fragment.querySelector('.last').textContent = f.last_name;
+
+        const editBtn = fragment.querySelector('.edit');
+        const delBtn = fragment.querySelector('.delete');
+
+        editBtn.addEventListener('click', () => openEdit(f));
+        delBtn.addEventListener('click', () => removeFriend(f.symbol));
+
+        tbody.appendChild(fragment);
+      });
+    }
+
+    async function createFriend(data) {
+      const res = await fetch(`${apiBase}/friends/`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || 'Create failed');
+      }
+      await render();
+    }
+
+    async function removeFriend(symbol) {
+      if (!confirm(`Delete friend ${symbol}?`)) return;
+      const res = await fetch(`${apiBase}/friends/${encodeURIComponent(symbol)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || 'Delete failed');
+      }
+      await render();
+    }
+
+    function openEdit(friend) {
+      const symbol = friend.symbol;
+      const newSymbol = prompt('New symbol (leave to keep):', friend.symbol);
+      if (newSymbol === null) return;
+      const first = prompt('First name:', friend.first_name);
+      if (first === null) return;
+      const last = prompt('Last name:', friend.last_name);
+      if (last === null) return;
+
+      updateFriend(symbol, {
+        symbol: newSymbol || friend.symbol,
+        first_name: first || friend.first_name,
+        last_name: last || friend.last_name
+      });
+    }
+
+    async function updateFriend(symbol, payload) {
+      // API expects fields symbol, first_name, last_name in PUT body
+      const res = await fetch(`${apiBase}/friends/${encodeURIComponent(symbol)}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          symbol: payload.symbol,
+          first_name: payload.first_name,
+          last_name: payload.last_name
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || 'Update failed');
+      }
+      await render();
+    }
+
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        symbol: document.getElementById('c_symbol').value.trim(),
+        first_name: document.getElementById('c_first').value.trim(),
+        last_name: document.getElementById('c_last').value.trim()
+      };
+      await createFriend(data);
+      e.target.reset();
+    });
+
+    // initial load
+    render();
+  </script>
+</body>
+</html>
