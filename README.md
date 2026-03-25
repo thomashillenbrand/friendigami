@@ -18,7 +18,7 @@ Each combination is tracked as **occurred** or **not yet**. The goal: complete t
 - **Friend Management** — Add, edit, and delete friends with short unique IDs (e.g. `TH`, `MW`)
 - **Auto-Generated Combinations** — All possible groupings are created automatically when friends are added or removed
 - **Occurrence Tracking** — Click any combination to toggle its occurred status, with timestamps
-- **Filtering** — Filter combinations by group size and occurred status
+- **Filtering** — Filter combinations by group size, occurred status, and specific friends (multi-select dropdown)
 - **Progress Tracking** — See how many combinations you've completed out of the total
 - **SMS Integration** — Text friend IDs to a Twilio number (e.g. `TH, MW, RZ`) and get a response confirming whether it's a new combination or already logged
 - **Self-Hostable** — Dockerized with Cloudflare Tunnel support, designed to run on a Raspberry Pi
@@ -86,6 +86,28 @@ mamba run -n friendigami uvicorn app.main:app --reload
 ```
 
 The app starts at [http://localhost:8000](http://localhost:8000). The database is auto-created on first startup.
+
+### Docker (Local)
+
+To run locally with Docker without Cloudflare Tunnel:
+
+```bash
+# Build and start just the app
+docker build -t friendigami .
+mkdir -p data
+docker run -p 8000:8000 -v ./data:/app/data -e DATABASE_URL=sqlite:///data/friendigami.db friendigami
+```
+
+Or use Docker Compose (starts both the app and Cloudflare Tunnel):
+
+```bash
+cp .env.example .env
+# Edit .env and set CLOUDFLARE_TUNNEL_TOKEN (or omit the cloudflared service)
+mkdir -p data
+docker compose up -d
+```
+
+The app is available at [http://localhost:8000](http://localhost:8000).
 
 ### Optional: Seed the database
 
