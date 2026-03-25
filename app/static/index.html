@@ -2,173 +2,307 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Friendigami — Friends</title>
+  <title>Friendigami</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;max-width:900px;margin:2rem auto;padding:0 1rem}
-    /* Fixed table layout so header and body columns align predictably */
-    table{width:100%;border-collapse:collapse;margin-top:1rem;table-layout:fixed}
-    /* enforce consistent column sizing and prevent overflow */
-    th,td{border:1px solid #ddd;padding:.5rem;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-    /* make the actions column share the same width as the other columns */
-    #friendsTable col.actions-col { width: 25%; }
-    /* center action buttons and give them a small min-width so they fit */
-    .actions { text-align: center; }
-    .actions button { min-width: 64px; }
-    form{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
-    input{padding:.4rem;border:1px solid #ccc;border-radius:4px}
-    button{padding:.4rem .6rem;border-radius:4px;border:1px solid #888;background:#f5f5f5;cursor:pointer}
-    .inline{display:inline-flex;gap:.4rem}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      max-width: 960px; margin: 0 auto; padding: 1.5rem;
+      color: #1a1a1a; background: #fafafa;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: .25rem; }
+    .subtitle { color: #666; margin-bottom: 1.5rem; font-size: .95rem; }
+    h2 { font-size: 1.2rem; margin-bottom: .75rem; color: #333; }
+    section { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; }
+
+    /* Friends form */
+    .friend-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+    .friend-form input {
+      padding: .45rem .6rem; border: 1px solid #ccc; border-radius: 6px;
+      font-size: .9rem; outline: none;
+    }
+    .friend-form input:focus { border-color: #555; }
+    .friend-form input.symbol-input { width: 80px; text-transform: uppercase; }
+
+    /* Buttons */
+    button {
+      padding: .45rem .75rem; border-radius: 6px; border: 1px solid #ccc;
+      background: #fff; cursor: pointer; font-size: .85rem; transition: background .15s;
+    }
+    button:hover { background: #f0f0f0; }
+    button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    button.primary:hover { background: #1d4ed8; }
+    button.danger { color: #dc2626; border-color: #dc2626; }
+    button.danger:hover { background: #fef2f2; }
+
+    /* Friends table */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #eee; font-size: .9rem; }
+    th { font-weight: 600; color: #555; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+    .actions { display: flex; gap: .35rem; }
+
+    /* Combinations */
+    .combo-controls { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+    .combo-controls select, .combo-controls button { font-size: .85rem; }
+    .combo-controls select { padding: .4rem .5rem; border: 1px solid #ccc; border-radius: 6px; }
+    .progress { font-size: .9rem; color: #555; }
+    .progress strong { color: #1a1a1a; }
+
+    .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .6rem; }
+    .combo-card {
+      border: 1px solid #e0e0e0; border-radius: 6px; padding: .75rem;
+      cursor: pointer; transition: all .15s; user-select: none;
+    }
+    .combo-card:hover { border-color: #aaa; }
+    .combo-card.occurred { background: #f0fdf4; border-color: #86efac; }
+    .combo-card .combo-friends { font-weight: 600; font-size: .95rem; margin-bottom: .25rem; }
+    .combo-card .combo-meta { font-size: .75rem; color: #888; }
+    .combo-card.occurred .combo-meta { color: #16a34a; }
+
+    .empty { color: #999; font-style: italic; padding: 1rem 0; }
+
+    /* Edit inline */
+    .edit-row input { width: 80px; padding: .25rem .4rem; border: 1px solid #ccc; border-radius: 4px; font-size: .85rem; }
+    .edit-row .symbol-edit { width: 60px; text-transform: uppercase; }
   </style>
 </head>
 <body>
-  <h1>Friendigami — Friends</h1>
+  <h1>Friendigami</h1>
+  <p class="subtitle">Track every friend combination</p>
 
-  <section id="create">
-    <h2>Create Friend</h2>
-    <form id="createForm">
-      <input id="c_symbol" placeholder="Symbol (unique)" required />
+  <!-- Friends Section -->
+  <section>
+    <h2>Friends</h2>
+    <form class="friend-form" id="createForm">
+      <input class="symbol-input" id="c_symbol" placeholder="ID" required maxlength="6" />
       <input id="c_first" placeholder="First name" required />
       <input id="c_last" placeholder="Last name" required />
-      <button type="submit">Create</button>
+      <button type="submit" class="primary">Add Friend</button>
     </form>
-  </section>
-
-  <section id="list">
-    <h2>All Friends</h2>
-    <!-- use colgroup to guarantee column widths (last col is actions) -->
     <table id="friendsTable">
-      <colgroup>
-        <col style="width:25%">
-        <col style="width:25%">
-        <col style="width:25%">
-        <col class="actions-col">
-      </colgroup>
       <thead>
-        <tr>
-            <th>Symbol</th>
-            <th>First</th>
-            <th>Last</th>
-            <th>Actions</th>
-        </tr>
+        <tr><th>ID</th><th>First</th><th>Last</th><th style="width:140px">Actions</th></tr>
       </thead>
       <tbody></tbody>
     </table>
+    <p class="empty" id="noFriends" hidden>No friends yet. Add one above.</p>
   </section>
 
-  <template id="rowTemplate">
-    <tr>
-      <td class="sym"></td>
-      <td class="first"></td>
-      <td class="last"></td>
-    <td class="actions">
-        <div class="inline">
-            <button class="edit">Edit</button>
-            <button class="delete">Delete</button>
-        </div>
-    </td>
-    </tr>
-  </template>
+  <!-- Combinations Section -->
+  <section>
+    <h2>Combinations</h2>
+    <div class="combo-controls">
+      <label>Size:
+        <select id="sizeFilter"><option value="">All</option></select>
+      </label>
+      <label>Status:
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="false">Not yet</option>
+          <option value="true">Occurred</option>
+        </select>
+      </label>
+      <span class="progress" id="progressText"></span>
+      <button id="regenBtn" style="margin-left:auto">Regenerate All</button>
+    </div>
+    <div class="combo-grid" id="comboGrid"></div>
+    <p class="empty" id="noCombos" hidden>No combinations. Add at least 2 friends.</p>
+  </section>
 
   <script>
-    const apiBase = '';
+    const API = '';
 
-    async function fetchFriends() {
-      const res = await fetch(`${apiBase}/friends`);
-      return res.ok ? res.json() : [];
-    }
+    // ── Friends ──────────────────────────────────────────
 
-    async function render() {
+    async function loadFriends() {
+      const res = await fetch(`${API}/friends`);
+      const friends = res.ok ? await res.json() : [];
       const tbody = document.querySelector('#friendsTable tbody');
       tbody.innerHTML = '';
-      const friends = await fetchFriends();
-      const tpl = document.getElementById('rowTemplate');
+      document.getElementById('noFriends').hidden = friends.length > 0;
+
       friends.forEach(f => {
-        const fragment = tpl.content.cloneNode(true);
-        fragment.querySelector('.sym').textContent = f.symbol;
-        fragment.querySelector('.first').textContent = f.first_name;
-        fragment.querySelector('.last').textContent = f.last_name;
-
-        const editBtn = fragment.querySelector('.edit');
-        const delBtn = fragment.querySelector('.delete');
-
-        editBtn.addEventListener('click', () => openEdit(f));
-        delBtn.addEventListener('click', () => removeFriend(f.symbol));
-
-        tbody.appendChild(fragment);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${esc(f.symbol)}</td>
+          <td>${esc(f.first_name)}</td>
+          <td>${esc(f.last_name)}</td>
+          <td>
+            <div class="actions">
+              <button class="edit-btn">Edit</button>
+              <button class="danger del-btn">Delete</button>
+            </div>
+          </td>`;
+        tr.querySelector('.edit-btn').onclick = () => startEdit(tr, f);
+        tr.querySelector('.del-btn').onclick = () => deleteFriend(f.symbol);
+        tbody.appendChild(tr);
       });
+
+      await loadCombinations();
+    }
+
+    function startEdit(tr, f) {
+      tr.classList.add('edit-row');
+      tr.innerHTML = `
+        <td><input class="symbol-edit" value="${esc(f.symbol)}" maxlength="6" /></td>
+        <td><input value="${esc(f.first_name)}" /></td>
+        <td><input value="${esc(f.last_name)}" /></td>
+        <td>
+          <div class="actions">
+            <button class="primary save-btn">Save</button>
+            <button class="cancel-btn">Cancel</button>
+          </div>
+        </td>`;
+      tr.querySelector('.save-btn').onclick = async () => {
+        const inputs = tr.querySelectorAll('input');
+        await updateFriend(f.symbol, {
+          symbol: inputs[0].value.trim().toUpperCase(),
+          first_name: inputs[1].value.trim(),
+          last_name: inputs[2].value.trim(),
+        });
+      };
+      tr.querySelector('.cancel-btn').onclick = () => loadFriends();
     }
 
     async function createFriend(data) {
-      const res = await fetch(`${apiBase}/friends/`, {
+      const res = await fetch(`${API}/friends`, {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
         const err = await res.json();
         alert(err.detail || 'Create failed');
+        return;
       }
-      await render();
-    }
-
-    async function removeFriend(symbol) {
-      if (!confirm(`Delete friend ${symbol}?`)) return;
-      const res = await fetch(`${apiBase}/friends/${encodeURIComponent(symbol)}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.detail || 'Delete failed');
-      }
-      await render();
-    }
-
-    function openEdit(friend) {
-      const symbol = friend.symbol;
-      const newSymbol = prompt('New symbol (leave to keep):', friend.symbol);
-      if (newSymbol === null) return;
-      const first = prompt('First name:', friend.first_name);
-      if (first === null) return;
-      const last = prompt('Last name:', friend.last_name);
-      if (last === null) return;
-
-      updateFriend(symbol, {
-        symbol: newSymbol || friend.symbol,
-        first_name: first || friend.first_name,
-        last_name: last || friend.last_name
-      });
+      await loadFriends();
     }
 
     async function updateFriend(symbol, payload) {
-      // API expects fields symbol, first_name, last_name in PUT body
-      const res = await fetch(`${apiBase}/friends/${encodeURIComponent(symbol)}`, {
+      const res = await fetch(`${API}/friends/${encodeURIComponent(symbol)}`, {
         method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          symbol: payload.symbol,
-          first_name: payload.first_name,
-          last_name: payload.last_name
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
         alert(err.detail || 'Update failed');
+        return;
       }
-      await render();
+      await loadFriends();
+    }
+
+    async function deleteFriend(symbol) {
+      if (!confirm(`Delete friend ${symbol}? This will also remove their combinations.`)) return;
+      const res = await fetch(`${API}/friends/${encodeURIComponent(symbol)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || 'Delete failed');
+        return;
+      }
+      await loadFriends();
     }
 
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const data = {
-        symbol: document.getElementById('c_symbol').value.trim(),
+      await createFriend({
+        symbol: document.getElementById('c_symbol').value.trim().toUpperCase(),
         first_name: document.getElementById('c_first').value.trim(),
-        last_name: document.getElementById('c_last').value.trim()
-      };
-      await createFriend(data);
+        last_name: document.getElementById('c_last').value.trim(),
+      });
       e.target.reset();
     });
 
-    // initial load
-    render();
+    // ── Combinations ─────────────────────────────────────
+
+    let allCombos = [];
+
+    async function loadCombinations() {
+      const res = await fetch(`${API}/combinations`);
+      allCombos = res.ok ? await res.json() : [];
+      populateSizeFilter();
+      renderCombinations();
+    }
+
+    function populateSizeFilter() {
+      const select = document.getElementById('sizeFilter');
+      const current = select.value;
+      const sizes = [...new Set(allCombos.map(c => c.size))].sort((a, b) => a - b);
+      select.innerHTML = '<option value="">All</option>';
+      sizes.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = `${s} friends`;
+        select.appendChild(opt);
+      });
+      select.value = current;
+    }
+
+    function renderCombinations() {
+      const sizeVal = document.getElementById('sizeFilter').value;
+      const statusVal = document.getElementById('statusFilter').value;
+
+      let filtered = allCombos;
+      if (sizeVal) filtered = filtered.filter(c => c.size === parseInt(sizeVal));
+      if (statusVal !== '') filtered = filtered.filter(c => c.occurred === (statusVal === 'true'));
+
+      const grid = document.getElementById('comboGrid');
+      grid.innerHTML = '';
+      document.getElementById('noCombos').hidden = allCombos.length > 0;
+
+      const total = filtered.length;
+      const done = filtered.filter(c => c.occurred).length;
+      const allTotal = allCombos.length;
+      const allDone = allCombos.filter(c => c.occurred).length;
+      document.getElementById('progressText').innerHTML =
+        `<strong>${allDone}</strong> / ${allTotal} completed` +
+        (sizeVal || statusVal !== '' ? ` (showing ${total})` : '');
+
+      filtered.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'combo-card' + (c.occurred ? ' occurred' : '');
+        card.innerHTML = `
+          <div class="combo-friends">${esc(c.friends.join(', '))}</div>
+          <div class="combo-meta">${c.occurred ? 'Occurred' + (c.occurred_at ? ' ' + formatDate(c.occurred_at) : '') : 'Not yet'} · ${c.size} friends</div>`;
+        card.onclick = () => toggleCombo(c.id);
+        grid.appendChild(card);
+      });
+    }
+
+    async function toggleCombo(id) {
+      const res = await fetch(`${API}/combinations/${encodeURIComponent(id)}/toggle`, { method: 'PATCH' });
+      if (!res.ok) return;
+      const updated = await res.json();
+      const idx = allCombos.findIndex(c => c.id === id);
+      if (idx >= 0) allCombos[idx] = updated;
+      renderCombinations();
+    }
+
+    document.getElementById('sizeFilter').addEventListener('change', renderCombinations);
+    document.getElementById('statusFilter').addEventListener('change', renderCombinations);
+
+    document.getElementById('regenBtn').addEventListener('click', async () => {
+      if (!confirm('Regenerate all combinations? This will reset occurred status.')) return;
+      await fetch(`${API}/combinations/regenerate`, { method: 'POST' });
+      await loadCombinations();
+    });
+
+    // ── Helpers ───────────────────────────────────────────
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString();
+    }
+
+    // ── Init ──────────────────────────────────────────────
+    loadFriends();
   </script>
 </body>
 </html>
