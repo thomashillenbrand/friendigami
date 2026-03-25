@@ -65,6 +65,33 @@
     /* Edit inline */
     .edit-row input { width: 80px; padding: .25rem .4rem; border: 1px solid #ccc; border-radius: 4px; font-size: .85rem; }
     .edit-row .symbol-edit { width: 60px; text-transform: uppercase; }
+
+    /* Friend filter dropdown */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-toggle {
+      padding: .4rem .5rem; border: 1px solid #ccc; border-radius: 6px;
+      background: #fff; cursor: pointer; font-size: .85rem; min-width: 120px;
+      display: flex; align-items: center; gap: .35rem;
+    }
+    .dropdown-toggle::after { content: '\25BC'; font-size: .6rem; margin-left: auto; color: #888; }
+    .dropdown-menu {
+      display: none; position: absolute; top: 100%; left: 0; z-index: 10;
+      background: #fff; border: 1px solid #ccc; border-radius: 6px;
+      margin-top: .25rem; min-width: 150px; box-shadow: 0 4px 12px rgba(0,0,0,.1);
+      max-height: 200px; overflow-y: auto;
+    }
+    .dropdown.open .dropdown-menu { display: block; }
+    .dropdown-item {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .4rem .65rem; cursor: pointer; font-size: .85rem;
+    }
+    .dropdown-item:hover { background: #f5f5f5; }
+    .dropdown-item input { cursor: pointer; }
+    .friend-pills { display: inline-flex; gap: .25rem; flex-wrap: wrap; }
+    .friend-pill {
+      background: #e0e7ff; color: #3730a3; font-size: .75rem; padding: .1rem .4rem;
+      border-radius: 4px; font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -103,10 +130,12 @@
           <option value="true">Occurred</option>
         </select>
       </label>
-      <label>Friends:
-        <select id="friendFilter" multiple style="min-width:120px;height:auto;max-height:80px">
-        </select>
-      </label>
+      <div class="dropdown" id="friendDropdown">
+        <div class="dropdown-toggle" id="friendDropdownToggle">
+          Friends: <span class="friend-pills" id="friendPills">All</span>
+        </div>
+        <div class="dropdown-menu" id="friendDropdownMenu"></div>
+      </div>
       <span class="progress" id="progressText"></span>
       <button id="regenBtn" style="margin-left:auto">Regenerate All</button>
     </div>
@@ -244,17 +273,46 @@
       select.value = current;
     }
 
+    let selectedFriends = new Set();
+
     function populateFriendFilter() {
-      const select = document.getElementById('friendFilter');
-      const current = [...select.selectedOptions].map(o => o.value);
+      const menu = document.getElementById('friendDropdownMenu');
       const friends = [...new Set(allCombos.flatMap(c => c.friends))].sort();
-      select.innerHTML = '';
+      // Remove selections that no longer exist
+      selectedFriends.forEach(f => { if (!friends.includes(f)) selectedFriends.delete(f); });
+      menu.innerHTML = '';
       friends.forEach(f => {
-        const opt = document.createElement('option');
-        opt.value = f;
-        opt.textContent = f;
-        if (current.includes(f)) opt.selected = true;
-        select.appendChild(opt);
+        const item = document.createElement('label');
+        item.className = 'dropdown-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = f;
+        cb.checked = selectedFriends.has(f);
+        cb.addEventListener('change', () => {
+          if (cb.checked) selectedFriends.add(f);
+          else selectedFriends.delete(f);
+          updateFriendPills();
+          renderCombinations();
+        });
+        item.appendChild(cb);
+        item.appendChild(document.createTextNode(f));
+        menu.appendChild(item);
+      });
+      updateFriendPills();
+    }
+
+    function updateFriendPills() {
+      const container = document.getElementById('friendPills');
+      if (selectedFriends.size === 0) {
+        container.textContent = 'All';
+        return;
+      }
+      container.innerHTML = '';
+      [...selectedFriends].sort().forEach(f => {
+        const pill = document.createElement('span');
+        pill.className = 'friend-pill';
+        pill.textContent = f;
+        container.appendChild(pill);
       });
     }
 
@@ -262,12 +320,10 @@
       const sizeVal = document.getElementById('sizeFilter').value;
       const statusVal = document.getElementById('statusFilter').value;
 
-      const selectedFriends = [...document.getElementById('friendFilter').selectedOptions].map(o => o.value);
-
       let filtered = allCombos;
       if (sizeVal) filtered = filtered.filter(c => c.size === parseInt(sizeVal));
       if (statusVal !== '') filtered = filtered.filter(c => c.occurred === (statusVal === 'true'));
-      if (selectedFriends.length > 0) filtered = filtered.filter(c => selectedFriends.every(f => c.friends.includes(f)));
+      if (selectedFriends.size > 0) filtered = filtered.filter(c => [...selectedFriends].every(f => c.friends.includes(f)));
 
       const grid = document.getElementById('comboGrid');
       grid.innerHTML = '';
@@ -279,7 +335,7 @@
       const allDone = allCombos.filter(c => c.occurred).length;
       document.getElementById('progressText').innerHTML =
         `<strong>${allDone}</strong> / ${allTotal} completed` +
-        (sizeVal || statusVal !== '' ? ` (showing ${total})` : '');
+        (sizeVal || statusVal !== '' || selectedFriends.size > 0 ? ` (showing ${total})` : '');
 
       filtered.forEach(c => {
         const card = document.createElement('div');
@@ -303,7 +359,14 @@
 
     document.getElementById('sizeFilter').addEventListener('change', renderCombinations);
     document.getElementById('statusFilter').addEventListener('change', renderCombinations);
-    document.getElementById('friendFilter').addEventListener('change', renderCombinations);
+
+    document.getElementById('friendDropdownToggle').addEventListener('click', () => {
+      document.getElementById('friendDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('friendDropdown');
+      if (!dd.contains(e.target)) dd.classList.remove('open');
+    });
 
     document.getElementById('regenBtn').addEventListener('click', async () => {
       if (!confirm('Regenerate all combinations? This will reset occurred status.')) return;
