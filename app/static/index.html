@@ -103,6 +103,10 @@
           <option value="true">Occurred</option>
         </select>
       </label>
+      <label>Friends:
+        <select id="friendFilter" multiple style="min-width:120px;height:auto;max-height:80px">
+        </select>
+      </label>
       <span class="progress" id="progressText"></span>
       <button id="regenBtn" style="margin-left:auto">Regenerate All</button>
     </div>
@@ -222,6 +226,7 @@
       const res = await fetch(`${API}/combinations`);
       allCombos = res.ok ? await res.json() : [];
       populateSizeFilter();
+      populateFriendFilter();
       renderCombinations();
     }
 
@@ -239,13 +244,30 @@
       select.value = current;
     }
 
+    function populateFriendFilter() {
+      const select = document.getElementById('friendFilter');
+      const current = [...select.selectedOptions].map(o => o.value);
+      const friends = [...new Set(allCombos.flatMap(c => c.friends))].sort();
+      select.innerHTML = '';
+      friends.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        if (current.includes(f)) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
     function renderCombinations() {
       const sizeVal = document.getElementById('sizeFilter').value;
       const statusVal = document.getElementById('statusFilter').value;
 
+      const selectedFriends = [...document.getElementById('friendFilter').selectedOptions].map(o => o.value);
+
       let filtered = allCombos;
       if (sizeVal) filtered = filtered.filter(c => c.size === parseInt(sizeVal));
       if (statusVal !== '') filtered = filtered.filter(c => c.occurred === (statusVal === 'true'));
+      if (selectedFriends.length > 0) filtered = filtered.filter(c => selectedFriends.every(f => c.friends.includes(f)));
 
       const grid = document.getElementById('comboGrid');
       grid.innerHTML = '';
@@ -281,6 +303,7 @@
 
     document.getElementById('sizeFilter').addEventListener('change', renderCombinations);
     document.getElementById('statusFilter').addEventListener('change', renderCombinations);
+    document.getElementById('friendFilter').addEventListener('change', renderCombinations);
 
     document.getElementById('regenBtn').addEventListener('click', async () => {
       if (!confirm('Regenerate all combinations? This will reset occurred status.')) return;
